@@ -14,7 +14,7 @@ TypeMaster is a customizable [typing test](). platform. It comes with an account
 - minimalist design
 - account system
 - leaderboard
-- cool caret
+- cool caret
 
 # Discord community
 
