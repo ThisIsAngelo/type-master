@@ -24,6 +24,7 @@
 
   let wordsPerMinute = tweened(0, { delay: 300, duration: 1000 });
   let accuracy = tweened(0, { delay: 1300, duration: 1000 });
+  let typingAccuracy = tweened(0, { delay: 1300, duration: 1000 });
 
   let wordsEl;
   let letterEl;
@@ -51,13 +52,42 @@
     focusInput();
   }
 
+  function getTotalLetters(words) {
+    return words.reduce((count, word) => count + word.length, 0);
+  }
+
+  function getResults() {
+    endTime = new Date().getTime(); // Catat waktu selesai
+    const elapsedTimeInMinutes = (endTime - startTime) / (1000 * 60); // Waktu dalam menit
+    const wpm = getWordsPerMinute(correctLetters, elapsedTimeInMinutes);
+    $wordsPerMinute = wpm;
+    const acc = getAccuracy();
+    $accuracy = acc;
+    if ($authenticatedUser) {
+      sendScoreToServer(wpm, acc);
+    }
+  }
+
   function getWordsPerMinute(correctCharacters, timeInMinutes) {
     const word = 5;
     return Math.floor(correctCharacters / word / timeInMinutes);
   }
 
+  // const totalChars = 200; // Total karakter yang diketik
+  // const timeElapsedInMinutes = 1.5; // Waktu yang telah berlalu dalam menit
+  // const wpm = calculateWPM(totalChars, timeElapsedInMinutes);
+  // console.log(`WPM: ${wpm}`);
+  // function calculateWPM(totalChars, timeElapsedInMinutes) {
+  //   // Jumlah karakter per kata
+  //   const charsPerWord = 5;
+
+  //   // Menghitung WPM
+  //   const wpm = totalChars / charsPerWord / timeElapsedInMinutes;
+
+  //   return wpm;
+  // }
+
   function getAccuracy() {
-    const totalLetters = getTotalLetters(words);
     const expectedText = words.join(" ");
     const typedText = inputEl.value;
     for (let i = 0; i < expectedText.length && i < typedText.length; i++) {
@@ -65,27 +95,9 @@
         correctLetters++;
       }
     }
-    return Math.floor((correctLetters / expectedText.length) * 100);
+    return (correctLetters / expectedText.length) * 100;
+    // return (correctKeysPressed / totalKeysPressed) * 100;
   }
-
-  function getTotalLetters(words) {
-    return words.reduce((count, word) => count + word.length, 0);
-  }
-
-  function getResults() {
-    endTime = new Date().getTime();
-    const elapsedTimeInMinutes = (endTime - startTime) / (1000 * 60);
-    const wpm = getWordsPerMinute(correctLetters, elapsedTimeInMinutes);
-    $wordsPerMinute = wpm;
-
-    const acc = getAccuracy();
-    $accuracy = acc;
-
-    if ($authenticatedUser) {
-      sendScoreToServer(wpm, acc);
-    }
-  }
-
   function updateGameState() {
     setLetter();
     checkLetter();
@@ -204,6 +216,7 @@
   function startGame() {
     if (event.key.match(/^[A-Za-z0-9]$/)) {
       setGameState("in progress");
+      startTime = new Date().getTime();
       setGameTimer();
     }
   }
@@ -223,8 +236,8 @@
       }
 
       if (seconds === 0) {
-        setGameState("game over");
         getResults();
+        setGameState("game over");
       }
     }
     const interval = setInterval(gameTimer, 1000);
